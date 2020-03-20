@@ -52,6 +52,7 @@ A node:
     * [TLV Payload Format](#tlv_payload-format)
     * [Basic Multi-Part Payments](#basic-multi-part-payments)
     * [Route Blinding](#route-blinding)
+    * [Onion Messages](#onion-messages)
   * [Accepting and Forwarding a Payment](#accepting-and-forwarding-a-payment)
     * [Payload for the Last Node](#payload-for-the-last-node)
     * [Non-strict Forwarding](#non-strict-forwarding)
@@ -524,6 +525,93 @@ The `padding` field can be used to ensure that all `encrypted_data` have the
 same length. It's particularly useful when adding dummy hops at the end of a
 blinded route, to prevent the sender from figuring out which node is the final
 recipient.
+
+
+### Onion Messages
+
+Onion messages have an onion with an alternate `hop_payload`
+format: a `bigsize` followed by a `onionmsg_payload`.  Note that there
+is no legacy format, thus a `bigsize` of 0 means no payload.
+
+An intermediate node expects an `encrypted_data_tlv` which it can
+decrypt using the `blinding` which it is handed along with the onion
+message.
+
+Field numbers 64 through 255 are reserved for payloads for the final
+hop.
+
+1. `tlv_stream`: `onionmsg_payload`
+2. types:
+    1. type: 2 (`reply_path`)
+    2. data:
+        * [`point`:`first_node_id`]
+        * [`point`:`blinding`]
+        * [`...*onionmsg_path`:`path`]
+    1. type: 10 (`encrypted_data_tlv`)
+    2. data:
+        * [`...*byte`:`encrypted_data_tlv`]
+
+1. subtype: `onionmsg_path`
+2. data:
+    * [`point`:`node_id`]
+    * [`u16`:`enclen`]
+    * [`enclen*byte`:`enctlv`]
+
+
+#### Requirements
+
+The writer:
+- For the non-final nodes' `onionmsg_payload`:
+  - MUST set `enctlv` to a valid `encrypted_data_tlv` stream containing `next_node_id`.
+  - MUST encrypt `enctlv` as detailed in [Route Blinding](#route-blinding).
+  - MAY include `padding`.
+  - MUST NOT set `path_id`.
+- For the final node's `onionmsg_payload`:
+  - if the final node is permitted to reply:
+    - MUST set `reply_path` `blinding` to the initial blinding factor for the `next_node_id`
+    - MUST set `reply_path` `first_node_id` to the unblinded node id of the first node in the reply path.
+    - For every `reply_path` `path`:
+      - MUST set `node_id` to the blinded node id to encrypt the onion hop for.
+      - MUST encrypt `enctlv` as detailed in [Route Blinding](#route-blinding).
+      - MUST set `enctlv` to a valid `encrypted_data_tlv` stream which meets the requirements
+        of the `onionmsg_payload` when used by the recipient.
+      - MAY use `path_id` to contain a secret so it can recognize use of this `reply_path`.
+  - otherwise:
+    - MUST NOT set `reply_path`.
+
+The reader:
+- if it is not the final node according to the onion encryption:
+  - if `enctlv` is not present, or does not decrypt with the shared secret from the given `blinding` parameter:
+    - MUST drop the message.
+  - if the `enctlv` is not a valid `encrypted_data_tlv` tlvstream or does not contain `next_node_id`:
+    - MUST drop the message.
+  - if the `enctlv` contains `path_id`:
+    - MUST drop the message.
+  - otherwise:
+    - MUST ignore `padding`, if any.
+    - SHOULD forward the message using `onion_message` to the next peer indicated by `next_node_id`.
+    - if it forwards the message:
+      - MUST set `blinding` in the forwarded `onion_message` to the next blinding as calculated in [Route Blinding](#route-blinding).
+- otherwise (it is the final node):
+  - if `path_id` is set and corresponds to a path the reader has previously published in a `reply_path`:
+    - if the onion message is not a reply to that previous onion:
+	  - MUST ignore the onion message
+  - otherwise (unknown or unset `path_id`):
+    - if the onion message is a reply to an onion message which contained a `path_id`:
+	  - MUST respond (or not respond) exactly as if it did not send the initial onion message.
+  - if it wants to send a reply:
+    - MUST create an onion message using `reply_path`.
+    - MUST send the reply via `onion_message` to the node indicated by
+        the `first_node_id`, using `reply_path` `blinding` to send
+        along `reply_path` `path`.
+
+
+#### Rationale
+
+Care must be taken that replies are only accepted using the exact
+reply_path given, otherwise probing is possible.  That means checking
+both ways: non-replies don't use the reply path, and replies always
+use the reply path.
 
 # Accepting and Forwarding a Payment
 
