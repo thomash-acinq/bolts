@@ -25,6 +25,7 @@ operation, and closing.
       * [Completing the Transition to the Updated State: `revoke_and_ack`](#completing-the-transition-to-the-updated-state-revoke_and_ack)
       * [Updating Fees: `update_fee`](#updating-fees-update_fee)
     * [Message Retransmission: `channel_reestablish` message](#message-retransmission)
+    * [Peer Backup Storage](#peer-backup-storage)
   * [Authors](#authors)
 
 # Channel
@@ -379,6 +380,12 @@ This message introduces the `channel_id` to identify the channel. It's derived f
     * [`channel_id`:`channel_id`]
     * [`signature`:`signature`]
 
+1. `tlv_stream`: `funding_signed_tlvs`
+2. types:
+    1. type: 1 (`peer_backup`)
+    2. data:
+        * [`...*byte`:`backup_data`]
+
 #### Requirements
 
 Both peers:
@@ -480,6 +487,12 @@ along with the `scriptpubkey` it wants to be paid to.
    * [`u16`:`len`]
    * [`len*byte`:`scriptpubkey`]
 
+1. `tlv_stream`: `shutdown_tlvs`
+2. types:
+    1. type: 1 (`peer_backup`)
+    2. data:
+        * [`...*byte`:`backup_data`]
+
 #### Requirements
 
 A sending node:
@@ -558,6 +571,12 @@ the channel.
    * [`channel_id`:`channel_id`]
    * [`u64`:`fee_satoshis`]
    * [`signature`:`signature`]
+
+1. `tlv_stream`: `closing_signed_tlvs`
+2. types:
+    1. type: 1 (`peer_backup`)
+    2. data:
+        * [`...*byte`:`backup_data`]
 
 #### Requirements
 
@@ -1002,6 +1021,12 @@ sign the resulting transaction (as defined in [BOLT #3](03-transactions.md)), an
    * [`u16`:`num_htlcs`]
    * [`num_htlcs*signature`:`htlc_signature`]
 
+1. `tlv_stream`: `commitment_signed_tlvs`
+2. types:
+    1. type: 1 (`peer_backup`)
+    2. data:
+        * [`...*byte`:`backup_data`]
+
 #### Requirements
 
 A sending node:
@@ -1065,6 +1090,12 @@ The description of key derivation is in [BOLT #3](03-transactions.md#key-derivat
    * [`channel_id`:`channel_id`]
    * [`32*byte`:`per_commitment_secret`]
    * [`point`:`next_per_commitment_point`]
+
+1. `tlv_stream`: `revoke_and_ack_tlvs`
+2. types:
+    1. type: 1 (`peer_backup`)
+    2. data:
+        * [`...*byte`:`backup_data`]
 
 #### Requirements
 
@@ -1179,6 +1210,12 @@ messages are), they are independent of requirements here.
    * [`u64`:`next_revocation_number`]
    * [`32*byte`:`your_last_per_commitment_secret`]
    * [`point`:`my_current_per_commitment_point`]
+
+1. `tlv_stream`: `channel_reestablish_tlvs`
+2. types:
+    1. type: 1 (`peer_backup`)
+    2. data:
+        * [`...*byte`:`backup_data`]
 
 `next_commitment_number`: A commitment number is a 48-bit
 incrementing counter for each commitment transaction; counters
@@ -1382,6 +1419,31 @@ however), but the disclosure of previous secret still allows
 fall-behind detection.  An implementation can offer both, however, and
 fall back to the `option_data_loss_protect` behavior if
 `option_static_remotekey` is not negotiated.
+
+## Peer Backup Storage
+
+Nodes that advertise the `peer_backup_storage` feature offer storing arbitrary
+data for their peers. The data stored must fit in a lightning message, so it is
+inherently limited (less than 65535 bytes per channel).
+
+Nodes can verify that storage providers correctly store their backup data at
+each reconnection, by comparing the contents of the `peer_backup` of the
+`channel_reestablish` message to the last one they sent.
+
+A node connected to a storage provider:
+  - when it sends a message that completes an update of the channel state
+    (`funding_signed`, `commitment_signed`, `revoke_and_ack`, `shutdown` or
+    `closing_signed`):
+    - MAY include an optional `peer_backup` TLV field
+  - when it receives `channel_reestablish` with an outdated or missing
+    `peer_backup`:
+    - SHOULD fail the channel
+
+A storage provider:
+  - when it receives a `peer_backup`:
+    - MUST store this backup data
+  - when it sends `channel_reestablish`:
+    - MUST include the last `peer_backup` it received for that channel
 
 # Authors
 
