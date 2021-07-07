@@ -25,7 +25,7 @@ operation, and closing.
       * [Completing the Transition to the Updated State: `revoke_and_ack`](#completing-the-transition-to-the-updated-state-revoke_and_ack)
       * [Updating Fees: `update_fee`](#updating-fees-update_fee)
     * [Message Retransmission: `channel_reestablish` message](#message-retransmission)
-    * [Peer Backup Storage](#peer-backup-storage)
+    * [Channel Backup Storage](#channel-backup-storage)
   * [Authors](#authors)
 
 # Channel
@@ -382,7 +382,7 @@ This message introduces the `channel_id` to identify the channel. It's derived f
 
 1. `tlv_stream`: `funding_signed_tlvs`
 2. types:
-    1. type: 1 (`peer_backup`)
+    1. type: 1 (`channel_backup`)
     2. data:
         * [`...*byte`:`backup_data`]
 
@@ -489,7 +489,7 @@ along with the `scriptpubkey` it wants to be paid to.
 
 1. `tlv_stream`: `shutdown_tlvs`
 2. types:
-    1. type: 1 (`peer_backup`)
+    1. type: 1 (`channel_backup`)
     2. data:
         * [`...*byte`:`backup_data`]
 
@@ -574,7 +574,7 @@ the channel.
 
 1. `tlv_stream`: `closing_signed_tlvs`
 2. types:
-    1. type: 1 (`peer_backup`)
+    1. type: 1 (`channel_backup`)
     2. data:
         * [`...*byte`:`backup_data`]
 
@@ -1023,7 +1023,7 @@ sign the resulting transaction (as defined in [BOLT #3](03-transactions.md)), an
 
 1. `tlv_stream`: `commitment_signed_tlvs`
 2. types:
-    1. type: 1 (`peer_backup`)
+    1. type: 1 (`channel_backup`)
     2. data:
         * [`...*byte`:`backup_data`]
 
@@ -1093,7 +1093,7 @@ The description of key derivation is in [BOLT #3](03-transactions.md#key-derivat
 
 1. `tlv_stream`: `revoke_and_ack_tlvs`
 2. types:
-    1. type: 1 (`peer_backup`)
+    1. type: 1 (`channel_backup`)
     2. data:
         * [`...*byte`:`backup_data`]
 
@@ -1213,7 +1213,7 @@ messages are), they are independent of requirements here.
 
 1. `tlv_stream`: `channel_reestablish_tlvs`
 2. types:
-    1. type: 1 (`peer_backup`)
+    1. type: 1 (`channel_backup`)
     2. data:
         * [`...*byte`:`backup_data`]
 
@@ -1420,30 +1420,43 @@ fall-behind detection.  An implementation can offer both, however, and
 fall back to the `option_data_loss_protect` behavior if
 `option_static_remotekey` is not negotiated.
 
-## Peer Backup Storage
+## Channel Backup Storage
 
 Nodes that advertise the `peer_backup_storage` feature offer storing arbitrary
-data for their peers. The data stored must fit in a lightning message, so it is
-inherently limited (less than 65535 bytes per channel).
+data for their peers. [BOLT #1](01-messaging.md#node-backup-storage) describes
+how this allows storing per-node data, and the following section describes how
+this allows storing per-channel data.
 
-Nodes can verify that storage providers correctly store their backup data at
-each reconnection, by comparing the contents of the `peer_backup` of the
-`channel_reestablish` message to the last one they sent.
+A node whose peer has activated the `peer_backup_storage` feature:
+  - if it also has activated the `peer_backup_storage` feature:
+    - MUST NOT send their `channel_backup`
+  - otherwise:
+    - when it sends a message that completes an update of the channel state
+      (`funding_signed`, `commitment_signed`, `revoke_and_ack`, `shutdown` or
+      `closing_signed`):
+      - MAY include an optional `channel_backup` TLV field
+      - MUST limit its `channel_backup` to 32000 bytes
+    - when it receives `channel_reestablish` with an outdated or missing
+      `channel_backup`:
+      - SHOULD send a warning
+      - MAY disconnect
+      - MAY fail the channel
 
-A node connected to a storage provider:
-  - when it sends a message that completes an update of the channel state
-    (`funding_signed`, `commitment_signed`, `revoke_and_ack`, `shutdown` or
-    `closing_signed`):
-    - MAY include an optional `peer_backup` TLV field
-  - when it receives `channel_reestablish` with an outdated or missing
-    `peer_backup`:
-    - SHOULD fail the channel
-
-A storage provider:
-  - when it receives a `peer_backup`:
-    - MUST store this backup data
+A node that has activated the `peer_backup_storage` feature:
+  - when it receives a `channel_backup`:
+    - if its peer also has activated the `peer_backup_storage` feature:
+      - SHOULD send a warning
+      - MUST NOT store this backup data
+    - otherwise:
+      - if the `channel_backup` exceeds 32000 bytes:
+        - SHOULD send a warning
+        - MUST NOT store this backup data
+      - otherwise:
+        - MUST store this backup data
   - when it sends `channel_reestablish`:
-    - MUST include the last `peer_backup` it received for that channel
+    - MUST include the last `channel_backup` it received for that channel
+  - when the channel is closed:
+    - SHOULD wait at least 2016 blocks before deleting the `channel_backup`
 
 # Authors
 
