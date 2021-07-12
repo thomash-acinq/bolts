@@ -451,19 +451,22 @@ rotations as specified within [BOLT #8](08-transport.md).
 
 ## Node Backup Storage
 
-Nodes that advertise the `peer_backup_storage` feature offer storing arbitrary
-data for their peers. The data stored must not exceed 32000 bytes, which lets
-it fit in existing lightning messages (e.g. a `commitment_signed` message with
-483 htlc signatures).
+Nodes that advertise the `provide_peer_backup_storage` feature offer storing
+arbitrary data for their peers. The data stored must not exceed 32000 bytes,
+which lets it fit in existing lightning messages (e.g. a `commitment_signed`
+message with 483 htlc signatures).
 
-Nodes can verify that their `peer_backup_storage` peers correctly store their
-backup data at each reconnection, by comparing the contents of the retrieved
-backups with the last one they sent.
+Nodes that advertize the `want_peer_backup_storage` feature want to have their
+data stored by their peers that support `provide_peer_backup_storage`.
 
-This feature is asymmetric: nodes that can store backups for their peers will
-activate it, but nodes that want to have their backups stored must not activate
-it. If both nodes stored each other's backups, whenever one loses data it would
-force the other to close channels, which is undesirable.
+Nodes can verify that their `provide_peer_backup_storage` peers correctly store
+their backup data at each reconnection, by comparing the contents of the
+retrieved backups with the last one they sent.
+
+Note that it's not possible for _both_ peers to store each other's backups;
+whenever one loses data it would force the other to close channels, which is
+undesirable. In practice, this means that a node cannot set both
+`want_peer_backup_storage` and `provide_peer_backup_storage`.
 
 There are two types of backups:
   - `node_backup`, described in this section
@@ -476,8 +479,9 @@ Nodes ask their peers to store data using the `update_backup` message:
    * [`bigsize`: `length`]
    * [`length*byte`:`node_backup`]
 
-A node whose peer has activated the `peer_backup_storage` feature:
-  - if it also has activated the `peer_backup_storage` feature:
+A node with `want_peer_backup_storage` activated:
+  - MUST NOT activate `provide_peer_backup_storage`
+  - if its peer doesn't support `provide_peer_backup_storage`:
     - MUST NOT send `update_backup`
   - otherwise:
     - MAY send `update_backup` whenever necessary
@@ -487,9 +491,10 @@ A node whose peer has activated the `peer_backup_storage` feature:
       - MAY disconnect
       - MAY fail all channels with that peer
 
-A node that has activated the `peer_backup_storage` feature:
+A node with `provide_peer_backup_storage` activated:
+  - MUST NOT activate `want_peer_backup_storage`
   - when it receives `update_backup`:
-    - if its peer also has activated the `peer_backup_storage` feature:
+    - if its peer also has activated the `provide_peer_backup_storage` feature:
       - SHOULD send a warning
       - MUST NOT store this backup data
     - otherwise:

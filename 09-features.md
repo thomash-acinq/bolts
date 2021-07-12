@@ -41,14 +41,15 @@ The Context column decodes as follows:
 | 20/21 | `option_anchor_outputs`           | Anchor outputs                                           | IN       | `option_static_remotekey` | [BOLT #3](03-transactions.md)                                         |
 | 22/23 | `option_anchors_zero_fee_htlc_tx` | Anchor commitment type with zero fee HTLC transactions   | IN       |                           | [BOLT #3][bolt03-htlc-tx], [lightning-dev][ml-sighash-single-harmful] |
 | 26/27 | `option_shutdown_anysegwit`       | Future segwit versions allowed in `shutdown`             | IN       |                           | [BOLT #2][bolt02-shutdown]                                            |
-| 36/37 | `peer_backup_storage`             | Allow storing encrypted peer backup data                 | IN       |                           | [BOLT #1][bolt01-node-backup], [BOLT #2][bolt02-channel-backup]       |
+| 36/37 | `want_peer_backup_storage`        | Want to use other nodes to store encrypted backup data   | IN       |                           | [BOLT #1][bolt01-node-backup], [BOLT #2][bolt02-channel-backup]       |
+| 38/39 | `provide_peer_backup_storage`     | Can store other nodes' encrypted backup data             | IN       |                           | [BOLT #1][bolt01-node-backup], [BOLT #2][bolt02-channel-backup]       |
 
 ## Requirements
 
 The origin node:
   * If it supports a feature above, SHOULD set the corresponding odd
     bit in all feature fields indicated by the Context column unless
-	indicated that it must set the even feature bit instead.
+	  indicated that it must set the even feature bit instead.
   * If it requires a feature above, MUST set the corresponding even
     feature bit in all feature fields indicated by the Context column,
     unless indicated that it must set the odd feature bit instead.
@@ -76,6 +77,12 @@ The origin must set all transitive feature dependencies in order to create a
 well-formed feature vector. By validating all known dependencies up front, this
 simplifies logic gated on a single feature bit; the feature's dependencies are
 known to be set, and do not need to be validated at every feature gate.
+
+Some features are asymmetric and come in pairs (e.g. `want_peer_backup_storage`
+and `provide_peer_backup_storage`), where some peers may want to use a feature
+that other peers provide, without providing it themselves. Nodes that want to
+only connect to peers who provide such feature should set the `want_XXX` bit to
+mandatory.
 
 ![Creative Commons License](https://i.creativecommons.org/l/by/4.0/88x31.png "License CC-BY")
 <br>

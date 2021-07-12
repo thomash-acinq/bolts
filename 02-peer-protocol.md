@@ -1422,29 +1422,28 @@ fall back to the `option_data_loss_protect` behavior if
 
 ## Channel Backup Storage
 
-Nodes that advertise the `peer_backup_storage` feature offer storing arbitrary
-data for their peers. [BOLT #1](01-messaging.md#node-backup-storage) describes
-how this allows storing per-node data, and the following section describes how
-this allows storing per-channel data.
+Nodes that advertise the `provide_peer_backup_storage` feature offer storing
+arbitrary data for their peers. [BOLT #1](01-messaging.md#node-backup-storage)
+describes how this allows storing per-node data, and the following section
+describes how this allows storing per-channel data.
 
-A node whose peer has activated the `peer_backup_storage` feature:
-  - if it also has activated the `peer_backup_storage` feature:
+A node with `want_peer_backup_storage` activated:
+  - MUST NOT activate `provide_peer_backup_storage`
+  - if its peer doesn't support `provide_peer_backup_storage`:
     - MUST NOT send their `channel_backup`
   - otherwise:
-    - when it sends a message that completes an update of the channel state
-      (`funding_signed`, `commitment_signed`, `revoke_and_ack`, `shutdown` or
-      `closing_signed`):
+    - when it sends a message that completes an update of the channel state (`funding_signed`, `commitment_signed`, `revoke_and_ack`, `shutdown` or `closing_signed`):
       - MAY include an optional `channel_backup` TLV field
       - MUST limit its `channel_backup` to 32000 bytes
-    - when it receives `channel_reestablish` with an outdated or missing
-      `channel_backup`:
+    - when it receives `channel_reestablish` with an outdated or missing `channel_backup`:
       - SHOULD send a warning
       - MAY disconnect
       - MAY fail the channel
 
-A node that has activated the `peer_backup_storage` feature:
+A node with `provide_peer_backup_storage` activated:
+  - MUST NOT activate `want_peer_backup_storage`
   - when it receives a `channel_backup`:
-    - if its peer also has activated the `peer_backup_storage` feature:
+    - if its peer also has activated the `provide_peer_backup_storage` feature:
       - SHOULD send a warning
       - MUST NOT store this backup data
     - otherwise:
