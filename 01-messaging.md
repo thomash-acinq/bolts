@@ -456,17 +456,14 @@ arbitrary data for their peers. The data stored must not exceed 32000 bytes,
 which lets it fit in existing lightning messages (e.g. a `commitment_signed`
 message with 483 htlc signatures).
 
-Nodes that advertize the `want_peer_backup_storage` feature want to have their
+Nodes that advertise the `want_peer_backup_storage` feature want to have their
 data stored by their peers that support `provide_peer_backup_storage`.
 
 Nodes can verify that their `provide_peer_backup_storage` peers correctly store
 their backup data at each reconnection, by comparing the contents of the
-retrieved backups with the last one they sent.
-
-Note that it's not possible for _both_ peers to store each other's backups;
-whenever one loses data it would force the other to close channels, which is
-undesirable. In practice, this means that a node cannot set both
-`want_peer_backup_storage` and `provide_peer_backup_storage`.
+retrieved backups with the last one they sent. However, nodes should not expect
+their peers to always have their latest backup available (note that there is no
+ack to ensure a backup has been correctly stored).
 
 There are two types of backups:
   - `node_backup`, described in this section
@@ -480,31 +477,23 @@ Nodes ask their peers to store data using the `update_backup` message:
    * [`length*byte`:`node_backup`]
 
 A node with `want_peer_backup_storage` activated:
-  - MUST NOT activate `provide_peer_backup_storage`
   - if its peer doesn't support `provide_peer_backup_storage`:
     - MUST NOT send `update_backup`
   - otherwise:
     - MAY send `update_backup` whenever necessary
     - MUST limit its `node_backup` to 32000 bytes
     - when it receives `init` with an outdated or missing `node_backup`:
-      - SHOULD send a warning
-      - MAY disconnect
-      - MAY fail all channels with that peer
+      - MAY send a warning
 
 A node with `provide_peer_backup_storage` activated:
-  - MUST NOT activate `want_peer_backup_storage`
   - when it receives `update_backup`:
-    - if its peer also has activated the `provide_peer_backup_storage` feature:
+    - if the `node_backup` exceeds 32000 bytes:
       - SHOULD send a warning
       - MUST NOT store this backup data
     - otherwise:
-      - if the `node_backup` exceeds 32000 bytes:
-        - SHOULD send a warning
-        - MUST NOT store this backup data
-      - otherwise:
-        - MUST store this backup data
+      - SHOULD store this backup data
   - when it sends `init`:
-    - MUST include the last `node_backup` it received from that peer
+    - MUST include the last `node_backup` it stored for that peer
   - when all channels with that peer are closed:
     - SHOULD wait at least 2016 blocks before deleting the `node_backup`
 

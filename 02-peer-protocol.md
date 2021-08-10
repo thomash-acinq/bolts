@@ -1428,7 +1428,6 @@ describes how this allows storing per-node data, and the following section
 describes how this allows storing per-channel data.
 
 A node with `want_peer_backup_storage` activated:
-  - MUST NOT activate `provide_peer_backup_storage`
   - if its peer doesn't support `provide_peer_backup_storage`:
     - MUST NOT send their `channel_backup`
   - otherwise:
@@ -1436,24 +1435,17 @@ A node with `want_peer_backup_storage` activated:
       - MAY include an optional `channel_backup` TLV field
       - MUST limit its `channel_backup` to 32000 bytes
     - when it receives `channel_reestablish` with an outdated or missing `channel_backup`:
-      - SHOULD send a warning
-      - MAY disconnect
-      - MAY fail the channel
+      - MAY send a warning
 
 A node with `provide_peer_backup_storage` activated:
-  - MUST NOT activate `want_peer_backup_storage`
   - when it receives a `channel_backup`:
-    - if its peer also has activated the `provide_peer_backup_storage` feature:
+    - if the `channel_backup` exceeds 32000 bytes:
       - SHOULD send a warning
       - MUST NOT store this backup data
     - otherwise:
-      - if the `channel_backup` exceeds 32000 bytes:
-        - SHOULD send a warning
-        - MUST NOT store this backup data
-      - otherwise:
-        - MUST store this backup data
+      - SHOULD store this backup data
   - when it sends `channel_reestablish`:
-    - MUST include the last `channel_backup` it received for that channel
+    - MUST include the last `channel_backup` it stored for that channel
   - when the channel is closed:
     - SHOULD wait at least 2016 blocks before deleting the `channel_backup`
 
