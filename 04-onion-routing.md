@@ -52,7 +52,7 @@ A node:
     * [TLV Payload Format](#tlv_payload-format)
     * [Basic Multi-Part Payments](#basic-multi-part-payments)
     * [Route Blinding](#route-blinding)
-    * [Onion Messages](#onion-messages)
+    * [Onion Message Payload Format](#onion-message-payload-format)
   * [Accepting and Forwarding a Payment](#accepting-and-forwarding-a-payment)
     * [Payload for the Last Node](#payload-for-the-last-node)
     * [Non-strict Forwarding](#non-strict-forwarding)
@@ -64,6 +64,7 @@ A node:
   * [Returning Errors](#returning-errors)
     * [Failure Messages](#failure-messages)
     * [Receiving Failure Codes](#receiving-failure-codes)
+  * [Onion Messages](#onion-messages)
   * [Test Vector](#test-vector)
     * [Returning Errors Tests](#returning-errors-tests)
   * [References](#references)
@@ -527,7 +528,7 @@ blinded route, to prevent the sender from figuring out which node is the final
 recipient.
 
 
-### Onion Messages
+### Onion Message Payload Format
 
 Onion messages have an onion with an alternate `hop_payload`
 format: a `bigsize` followed by a `onionmsg_payload`.  Note that there
@@ -1388,6 +1389,56 @@ The _origin node_:
     - SHOULD then retry routing and sending the payment.
   - MAY use the data specified in the various failure types for debugging
   purposes.
+
+# Onion Messages
+
+Onion messages allow peers to use existing connections to query for
+invoices (see [BOLT 12](12-offer-encoding.md)).  Like gossip messages,
+they are not associated with a particular local channel.  Like HTLCs,
+they use [onion messages](#onion-message-payload-format) protocol for
+end-to-end encryption.
+
+Onion messages are unreliable: in particular, they are designed to
+be cheap to process and require no storage to forward.  As a result,
+there is no error returned from intermediary nodes.
+
+For consistency, all onion messages use [Route Blinding](#route-blinding).
+
+## The `onion_message` Message
+
+1. type: 513 (`onion_message`) (`option_onion_messages`)
+2. data:
+    * [`point`:`blinding`]
+    * [`u16`:`len`]
+    * [`len*byte`:`onionmsg`]
+
+## Requirements
+
+The writer:
+- MUST populate the per-hop payloads as described in [Onion Message Payload Format](onion-message-payload-format).
+- SHOULD retry via a different route if it expects a response and
+  doesn't receive one after a reasonable period.
+- SHOULD set `len` to 1366 or 32834.
+
+The reader:
+- MUST handle the per-hop payloads as described in [Onion Message Payload Format](onion-message-payload-format).
+- SHOULD accept onion messages from peers without an established channel.
+- MAY rate-limit messages by dropping them.
+
+## Rationale
+
+All onion messages are blinded, even though this overhead is not
+always necessary (33 bytes here, the 16-byte MAC for each enctlv in
+the onion).  This blinding allows nodes to use a path provided by
+others without knowing its contents.  Using it universally simplifies
+implementations a little, and makes it more difficult to distinguish
+onion messages.
+
+`len` allows larger messages to be sent than the standard 1300 bytes
+allowed for an HTLC onion, but this should be used sparingly as it is
+reduces anonymity set, hence the recommendation that it either look
+like an HTLC onion, or if larger, be a fixed size.
+
 
 # Test Vector
 

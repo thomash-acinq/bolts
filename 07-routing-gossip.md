@@ -33,7 +33,6 @@ To support channel and node discovery, three *gossip messages* are supported:
   * [HTLC Fees](#htlc-fees)
   * [Pruning the Network View](#pruning-the-network-view)
   * [Recommendations for Routing](#recommendations-for-routing)
-  * [Onion Messages](#onion-messages)
   * [References](#references)
 
 ## Definition of `short_channel_id`
@@ -1117,60 +1116,6 @@ A->D's `update_add_htlc` message would be:
 
 And D->C's `update_add_htlc` would again be the same as B->C's direct payment
 above.
-
-# Onion Messages
-
-Onion messages allow peers to use existing connections to query for
-invoices (see [BOLT 12](12-offer-encoding.md)).  Like gossip messages,
-they are not associated with a particular local channel.  Like HTLCs,
-they use [BOLT 4](04-onion-routing.md#onion-messages) protocol for
-end-to-end encryption.
-
-Onion messages are unreliable: in particular, they are designed to
-be cheap to process and require no storage to forward.  As a result,
-there is no error returned from intermediary nodes.
-
-To enable messaging via blinded paths, the key used to decrypt the
-onion is tweaked by a shared secret derived from a `blinding` point
-passed with the onion; this is used for all onion messages to make
-them indistinguishable.  This shared secret is also used to decrypt
-the `enctlv` field inside the `onionmsg`'s `onionmsg_payload`.
-
-## The `onion_message` Message
-
-1. type: 387 (`onion_message`) (`option_onion_messages`)
-2. data:
-    * [`point`:`blinding`]
-    * [`u16`:`len`]
-    * [`len*byte`:`onionmsg`]
-
-## Requirements
-
-The writer:
-- MUST populate the per-hop payloads as described in [BOLT 4](04-onion-routing.md#onion-messages).
-- SHOULD retry via a different route if it expects a response and
-  doesn't receive one after a reasonable period.
-- SHOULD set `len` to 1366 or 32834.
-
-The reader:
-- MUST handle the per-hop payloads as described in [BOLT 4](04-onion-routing.md#onion-messages).
-- SHOULD accept onion messages from peers without an established channel.
-- MAY rate-limit messages by dropping them.
-
-## Rationale
-
-All onion messages are blinded, even though this overhead is not
-always necessary (33 bytes here, the 16-byte MAC for each enctlv in
-the onion).  This blinding allows nodes to use a path provided by
-others without knowing its contents.  Using it universally simplifies
-implementations a little, and makes it more difficult to distinguish
-onion messages.
-
-`len` allows larger messages to be sent than the standard 1300 bytes
-allowed for an HTLC onion, but this should be used sparingly as it is
-reduces anonymity set, hence the recommendation that it either look
-like an HTLC onion, or if larger, be a fixed size.
-
 
 # References
 
