@@ -538,7 +538,7 @@ An intermediate node expects an `encrypted_data_tlv` which it can
 decrypt using the `blinding` which it is handed along with the onion
 message.
 
-Field numbers 64 through 255 are reserved for payloads for the final
+Field numbers 64 and above are reserved for payloads for the final
 hop.
 
 1. `tlv_stream`: `onionmsg_payload`
@@ -548,7 +548,7 @@ hop.
         * [`point`:`first_node_id`]
         * [`point`:`blinding`]
         * [`...*onionmsg_path`:`path`]
-    1. type: 10 (`encrypted_data_tlv`)
+    1. type: 4 (`encrypted_data_tlv`)
     2. data:
         * [`...*byte`:`encrypted_data_tlv`]
 
@@ -556,7 +556,7 @@ hop.
 2. data:
     * [`point`:`node_id`]
     * [`u16`:`enclen`]
-    * [`enclen*byte`:`enctlv`]
+    * [`enclen*byte`:`encrypted_recipient_data`]
 
 
 #### Requirements
