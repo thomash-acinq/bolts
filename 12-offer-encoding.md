@@ -729,6 +729,9 @@ using `onion_message` `invoice` field.
     1. type: 18 (`blindedpay`)
     2. data:
         * [`...*blinded_payinfo`:`payinfo`]
+    1. type: 19 (`blinded_capacities`)
+    2. data:
+        * [`...*u64`:`incoming_msat`]
     1. type: 20 (`issuer`)
     2. data:
         * [`...*utf8`:`issuer`]
@@ -840,8 +843,10 @@ A writer of an invoice:
   - if it includes `blinded_path`:
     - MUST specify `path` in order of most-preferred to least-preferred if
       it has a preference.
-    - MUST include `blinded_payinfo` with exactly one `payinfo` for
+    - MUST include `blindedpay` with exactly one `payinfo` for
       each `onionmsg_path` in `blinded_path`, in order.
+    - if it includes `blinded_capacities`:
+      - MUST include exactly one `incoming_msat` (in millisatoshis) per `path`, reflecting the expected maximum amount that can be sent through the path.
     - SHOULD ignore any payment which does not use one of the paths.
   - otherwise:
     - MUST NOT include `blinded_payinfo`.
@@ -971,6 +976,10 @@ if that is a long time and the offer was in another currency, it's
 common to cap this at some maximum duration.  For example, omitting it
 implies the default of 7200 seconds, which is generally a sufficient
 time for payment.
+
+It's often useful to provide capacity hints, particularly where more
+than one blinded path is included, for payers to use multi-part
+payments.
 
 # Invoice Errors
 
