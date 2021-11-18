@@ -531,6 +531,9 @@ invoices is `lnr`.
     1. type: 38 (`payer_key`)
     2. data:
         * [`point32`:`key`]
+    1. type: 39 (`payer_note`)
+    2. data:
+        * [`...*utf8`:`note`]
     1. type: 50 (`payer_info`)
     2. data:
         * [`...*byte`:`blob`]
@@ -579,6 +582,7 @@ The writer of an invoice_request:
     - otherwise:
       - MUST NOT include `recurrence_start`
     - MAY set `payer_info` to arbitrary data to be reflected into the invoice.
+    - MAY set `payer_note` to arbitrary string to be reflected into the invoice.
     - if the offer contained `recurrence_limit`:
       - MUST NOT send an `invoice_request` for a period greater than `max_period`
     - SHOULD NOT send an `invoice_request` for a period which has
@@ -682,6 +686,9 @@ BIP-32 derivation path); a valid system might be for a node to maintain a base
 payer key, and encode a 128-bit tweak here.  The payer_key would be derived by
 tweaking the base key with SHA256(payer_base_pubkey || tweak).
 
+`payer_note` allows you to compliment, taunt, or otherwise engrave
+graffiti into the invoice for all to see.
+
 Users can give a tip (or obscure the amount sent) by specifying an
 `amount` in their invoice request, even though the offer specifies an
 `amount`.  Obviously this will only be accepted by the recipient if
@@ -757,6 +764,9 @@ using `onion_message` `invoice` field.
     1. type: 38 (`payer_key`)
     2. data:
         * [`point32`:`key`]
+    1. type: 39 (`payer_note`)
+    2. data:
+        * [`...*utf8`:`note`]
     1. type: 50 (`payer_info`)
     2. data:
         * [`...*byte`:`blob`]
@@ -863,6 +873,8 @@ A writer of an invoice:
     - MUST set (or not set) `recurrence_start` exactly as the invoice_request did.
     - MUST set `payer_key` exactly as the invoice_request did.
     - MUST set (or not set) `payer_info` exactly as the invoice_request did.
+    - MUST set (or not set) `payer_note` exactly as the invoice_request did,
+      or MUST not set it.
     - MUST set (or not set) `replace_invoice` exactly as the invoice_request did.
     - MUST begin `description` with the `description` from the offer.
     - MAY append additional information to `description` (e.g. " +shipping").
@@ -913,6 +925,7 @@ A reader of an invoice:
        - `recurrence_start`
        - `payer_key`
        - `payer_info`
+    - MUST reject the invoice if `payer_note` is set, and was unset or not equal to the field in the `invoice_request`.
     - SHOULD confirm authorization if the `description` does not exactly
       match the `offer`
       - MAY highlight if `description` has simply had a change appended.
@@ -980,6 +993,10 @@ time for payment.
 It's often useful to provide capacity hints, particularly where more
 than one blinded path is included, for payers to use multi-part
 payments.
+
+The invoice issuer is allowed to ignore `payer_note` (it has an odd
+number, so is optional), but if it does not, it must copy it exactly
+as the invoice_request specified.
 
 # Invoice Errors
 
