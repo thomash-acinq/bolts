@@ -1,0 +1,133 @@
+[
+  {
+    "comment": "Simple n1 test, tlv1 = 1000",
+    "tlv": "n1",
+    "all-tlvs": "010203e8",
+    "leaves": [
+      {
+        "H(`LnLeaf`,010203e8)": "67a2a995433890d8fe0c18a1765ad19e98f1fcfeff14c13a45bbc80964a78cf7",
+        "H(`LnAll`|all-tlvs,tlv1)": "5f9c66e586de950d76f41bdc959a30cce525a514ac05e79c00bf0cbf6e48974f",
+        "H(`LnBranch`,leaf+nonce)": "aa0aa0f694c85492ac459c1de9831a37682985f5e840ecc9b1e28eece7dc5236"
+      }
+    ],
+    "branches": [],
+    "merkle": "aa0aa0f694c85492ac459c1de9831a37682985f5e840ecc9b1e28eece7dc5236"
+  },
+  {
+    "comment": "n1 test, tlv1 = 1000, tlv2 = 1x2x3",
+    "tlv": "n1",
+    "all-tlvs": "010203e802080000010000020003",
+    "leaves": [
+      {
+        "H(`LnLeaf`,010203e8)": "67a2a995433890d8fe0c18a1765ad19e98f1fcfeff14c13a45bbc80964a78cf7",
+        "H(`LnAll`|all-tlvs,tlv1)": "38808a57769976c27e25e58d3ac2081e7502f58619d93cc84f52ae52b1d4188a",
+        "H(`LnBranch`,leaf+nonce)": "0a30446f04454a37e86d53ea48617cd043dd76a80cb061bc25d90942b4bfd289"
+      },
+      {
+        "H(`LnLeaf`,02080000010000020003)": "cc04567fcbff60d4de87afe5142de16b7401531300554838b2d1117341a4ea8d",
+        "H(`LnAll`|all-tlvs,tlv2)": "266938e3ac1416fa20dd53a24f385221ca91e7bb76c42f4c3c75abb0f32039c4",
+        "H(`LnBranch`,leaf+nonce)": "093d8dc7afb0ca69cf9005ff5a256e59ac6eebceb328242455f2877a7fd114d6"
+      }
+    ],
+    "branches": [
+      {
+        "desc": "1: tlv1+nonce and tlv2+nonce",
+        "H(`LnBranch`,093d8dc7afb0ca69cf9005ff5a256e59ac6eebceb328242455f2877a7fd114d60a30446f04454a37e86d53ea48617cd043dd76a80cb061bc25d90942b4bfd289)": "013b756ed73554cbc4dd3d90f363cb7cba6d8a279465a21c464e582b173ff502"
+      }
+    ],
+    "merkle": "013b756ed73554cbc4dd3d90f363cb7cba6d8a279465a21c464e582b173ff502"
+  },
+  {
+    "comment": "n1 test, tlv1 = 1000, tlv2 = 1x2x3, tlv3 = 0266e4598d1d3c415f572a8488830b60f7e744ed9235eb0b1ba93283b315c03518, 1, 2",
+    "tlv": "n1",
+    "all-tlvs": "010203e80208000001000002000303310266e4598d1d3c415f572a8488830b60f7e744ed9235eb0b1ba93283b315c0351800000000000000010000000000000002",
+    "leaves": [
+      {
+        "H(`LnLeaf`,010203e8)": "67a2a995433890d8fe0c18a1765ad19e98f1fcfeff14c13a45bbc80964a78cf7",
+        "H(`LnAll`|all-tlvs,tlv1)": "90c4b64586aaa825a3f4be19191db57a31eae3f34ef988e26ef8486f3ca00643",
+        "H(`LnBranch`,leaf+nonce)": "7477411b660612ec7e733eb6f431aebdfba14a141238b61c3358063e5b7f910a"
+      },
+      {
+        "H(`LnLeaf`,02080000010000020003)": "cc04567fcbff60d4de87afe5142de16b7401531300554838b2d1117341a4ea8d",
+        "H(`LnAll`|all-tlvs,tlv2)": "b0c508883fea4e19e047c106075f53cbfa346123483682a3a8b4a4453519c690",
+        "H(`LnBranch`,leaf+nonce)": "dfae7445977443bc0949afbafce7551d8a9f40cb04ec35690692f8a3b7c58d77"
+      },
+      {
+        "H(`LnLeaf`,03310266e4598d1d3c415f572a8488830b60f7e744ed9235eb0b1ba93283b315c0351800000000000000010000000000000002)": "47da319b36d61a006e0dbcf6642fe4c822c33a6131af67dfa9293b089c5cbd27",
+        "H(`LnAll`|all-tlvs,tlv3)": "eaf058ae56c1dbdabb7244d0b5b3f636a4ac55ad63d1bbc4f8bf21b421f5ccfb",
+        "H(`LnBranch`,leaf+nonce)": "cfd670cbc3dd5600efe4a54705612aa961b24b580b7fe1fb706bdb1615a656e2"
+      }
+    ],
+    "branches": [
+      {
+        "desc": "1: tlv1+nonce and tlv2+nonce",
+        "H(`LnBranch`,7477411b660612ec7e733eb6f431aebdfba14a141238b61c3358063e5b7f910adfae7445977443bc0949afbafce7551d8a9f40cb04ec35690692f8a3b7c58d77)": "a4ffc40bd169ec71184dcca086f2095f8a95a49a7a8460280d7a4d86a8b70aa3"
+      },
+      {
+        "desc": "1 and tlv3+nonce",
+        "H(`LnBranch`,a4ffc40bd169ec71184dcca086f2095f8a95a49a7a8460280d7a4d86a8b70aa3cfd670cbc3dd5600efe4a54705612aa961b24b580b7fe1fb706bdb1615a656e2)": "016fcda3b6f9ca30b35936877ca591fa101365a761a1453cfd9436777d593656"
+      }
+    ],
+    "merkle": "016fcda3b6f9ca30b35936877ca591fa101365a761a1453cfd9436777d593656"
+  },
+  {
+    "comment": "offer test, currency = USD, amount = 1000, description = 10USD every day, vendor = rusty.ozlabs.org, recurrence = time_unit = 1, period = 1, node_id = 4b9a1fa8e006f1e3937f65f66c408e6da8e1ca728ea43222a7381df1cc449605",
+    "tlv": "offer",
+    "all-tlvs": "0603555344080203e80a0f313055534420657665727920646179141072757374792e6f7a6c6162732e6f72671a0201011e204b9a1fa8e006f1e3937f65f66c408e6da8e1ca728ea43222a7381df1cc449605",
+    "leaves": [
+      {
+        "H(`LnLeaf`,0603555344)": "ae61bfe63f8fc81b7a02a962182a5b5e01501365806481d52fbdfbca915266fa",
+        "H(`LnAll`|all-tlvs,tlv)": "f98809c35580aa567a754bc3197530b96a3f1f733f41801c750e5b61b9032a25",
+        "H(`LnBranch`,leaf+nonce)": "3b3b489c21f92900208537703cd6a2afd78932156d56f0167120eb8c2023fc09"
+      },
+      {
+        "H(`LnLeaf`,080203e8)": "a3428425a1367d08763242077d0d7cb09c12ff9cc732b67a0832735d3526b034",
+        "H(`LnAll`|all-tlvs,tlv)": "f98809c35580aa567a754bc3197530b96a3f1f733f41801c750e5b61b9032a25",
+        "H(`LnBranch`,leaf+nonce)": "8dc630674b080ae3dc070858532f0ddafcf66e5033577673998de0ba8a18a0d9"
+      },
+      {
+        "H(`LnLeaf`,0a0f313055534420657665727920646179)": "44ebb928769a86f0af81677fa87d4fbb019389896f0131118d8b7e29d7e57466",
+        "H(`LnAll`|all-tlvs,tlv)": "f98809c35580aa567a754bc3197530b96a3f1f733f41801c750e5b61b9032a25",
+        "H(`LnBranch`,leaf+nonce)": "9f26c22f4c82abe75fc613218610fce8eb8bcec3872da9c305ff5f326784d94f"
+      },
+      {
+        "H(`LnLeaf`,141072757374792e6f7a6c6162732e6f7267)": "73efd8af5bfd2750f5b13291d654cb73542915c4f939d07e0e906eb3f034908b",
+        "H(`LnAll`|all-tlvs,tlv)": "f98809c35580aa567a754bc3197530b96a3f1f733f41801c750e5b61b9032a25",
+        "H(`LnBranch`,leaf+nonce)": "1998e313dc105b137942bc6dfc005f21cc61ff5b6123076331e9d72af6c3f291"
+      },
+      {
+        "H(`LnLeaf`,1a020101)": "a15bb1f9abdba61b8682bca45e2409000820f8b4e591eb9c9ba2e7be62119b7c",
+        "H(`LnAll`|all-tlvs,tlv)": "f98809c35580aa567a754bc3197530b96a3f1f733f41801c750e5b61b9032a25",
+        "H(`LnBranch`,leaf+nonce)": "18a906e7c66f7e988e9b52939a2f1574512e18dffc8452b71bf4f4d0bfc20c86"
+      },
+      {
+        "H(`LnLeaf`,1e204b9a1fa8e006f1e3937f65f66c408e6da8e1ca728ea43222a7381df1cc449605)": "bacdf67ce812fe987842342724037f762bb485c12b8114b7a155c49a533df4e2",
+        "H(`LnAll`|all-tlvs,tlv)": "f98809c35580aa567a754bc3197530b96a3f1f733f41801c750e5b61b9032a25",
+        "H(`LnBranch`,leaf+nonce)": "59c9e43092548601659964944326876c6739ae9b20ee6c83fe52d5ce781209af"
+      }
+    ],
+    "branches": [
+      {
+        "desc": "1: currency+nonce and amount+nonce",
+        "H(`LnBranch`,3b3b489c21f92900208537703cd6a2afd78932156d56f0167120eb8c2023fc098dc630674b080ae3dc070858532f0ddafcf66e5033577673998de0ba8a18a0d9)": "223ee9d920c70887c248ec795b20a419a433a37c05093650f5229cc9f4ac982d"
+      },
+      {
+        "desc": "2: description+nonce and vendor+nonce",
+        "H(`LnBranch`,1998e313dc105b137942bc6dfc005f21cc61ff5b6123076331e9d72af6c3f2919f26c22f4c82abe75fc613218610fce8eb8bcec3872da9c305ff5f326784d94f)": "da55c085e10f2274ca328b8ed42931bfc6283611dd88cd4520d26a323d1400f7"
+      },
+      {
+        "desc": "3: 1 and 2",
+        "H(`LnBranch`,223ee9d920c70887c248ec795b20a419a433a37c05093650f5229cc9f4ac982dda55c085e10f2274ca328b8ed42931bfc6283611dd88cd4520d26a323d1400f7)": "7a988aed3db0814d3af8f3d9afc45eb98070dabac68024be6596684584ace26b"
+      },
+      {
+        "desc": "4: recurrence+nonce and node_id+nonce",
+        "H(`LnBranch`,18a906e7c66f7e988e9b52939a2f1574512e18dffc8452b71bf4f4d0bfc20c8659c9e43092548601659964944326876c6739ae9b20ee6c83fe52d5ce781209af)": "3d0ecbee16545513f7ea49971e570533d9714fca746ae51dad3da51e92949af5"
+      },
+      {
+        "desc": "5: 3 and 4",
+        "H(`LnBranch`,3d0ecbee16545513f7ea49971e570533d9714fca746ae51dad3da51e92949af57a988aed3db0814d3af8f3d9afc45eb98070dabac68024be6596684584ace26b)": "7cef68df49fd9222bed0138ca5603da06464b2f523ea773bc4edcb6bd07966e7"
+      }
+    ],
+    "merkle": "7cef68df49fd9222bed0138ca5603da06464b2f523ea773bc4edcb6bd07966e7"
+  }
+]
