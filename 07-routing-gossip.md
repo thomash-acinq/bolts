@@ -1,4 +1,4 @@
-# BOLT #7: P2P Node and Channel Discovery and Onion Messages
+# BOLT #7: P2P Node and Channel Discovery
 
 This specification describes simple node discovery, channel discovery, and channel update mechanisms that do not rely on a third-party to disseminate the information.
 

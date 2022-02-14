@@ -92,8 +92,8 @@ Readers of a bolt12 string:
 
 The use of bech32 is arbitrary, but already exists in the bitcoin
 world.  We currently omit the six-character trailing checksum: QR
-codes have their own checksums, bech32 doesn't protect against many
-length differences, and bech32m is not yet widely supported.
+codes have their own checksums anyway, and errors don't result in loss
+of funds.
 
 The use of `+` (which is ignored) allows use over limited
 text fields like Twitter:
@@ -124,7 +124,8 @@ Merkle-root; "lightning" is the literal 9-byte ASCII string,
 signature (e.g. "signature" or "refund_signature").
 
 The formulation of the Merkle tree is similar to that proposed in
-[BIP-taproot], with each TLV leaf paired with a nonce leaf to avoid
+[BIP-341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki),
+with each TLV leaf paired with a nonce leaf to avoid
 revealing adjacent nodes in proofs (assuming there is a non-revealed TLV
 which has enough entropy).
 
@@ -149,7 +150,7 @@ L2nonce=H("LnAll"||TLV1||TLV2||TLV3,TLV2)
 L3=H("LnLeaf",TLV3)
 L3nonce=H("LnAll"||TLV1||TLV2||TLV3,TLV3) 
 
-Assume L1 < L1nonce, and L2 > L2nonce.
+Assume L1 < L1nonce, L2 > L2nonce and L3 > L3nonce.
 
    L1    L1nonce                      L2   L2nonce                L3   L3nonce
      \   /                             \   /                       \   /
@@ -246,7 +247,7 @@ A writer of an offer:
   - if the chain for the invoice is not solely bitcoin:
     - MUST specify `chains` the offer is valid for.
   - otherwise:
-    - the bitcoin chain is implied as the first and only entry.
+    - MAY omit `chains`, implying that bitcoin is only chain.
   - if a specific minimum `amount` is required for successful payment:
     - MUST set `amount` to the amount expected (per item).
     - if the currency for `amount` is that of the first entry in `chains`:
@@ -396,7 +397,7 @@ The reader of an invoice_request:
   - MUST fail the request if `signature` is not correct.
   - if the offer had a `quantity_min` or `quantity_max` field:
     - MUST fail the request if there is no `quantity` field.
-    - MUST fail the request if there is `quantity` is not within that (inclusive) range.
+    - MUST fail the request if `quantity` is not within that (inclusive) range.
   - otherwise:
     - MUST fail the request if there is a `quantity` field.
   - if the offer included `amount`:
@@ -517,6 +518,7 @@ using `onion_message` `invoice` field.
     1. type: 52 (`refund_signature`)
     2. data:
         * [`bip340sig`:`payer_signature`]
+    1. type: 54 (`send_invoice`)
     1. type: 56 (`replace_invoice`)
     2. data:
         * [`sha256`:`payment_hash`]
@@ -641,6 +643,7 @@ A reader of an invoice:
        - `quantity`
        - `payer_key`
        - `payer_info`
+       - `chain`
     - MUST reject the invoice if `payer_note` is set, and was unset or not equal to the field in the `invoice_request`.
     - SHOULD confirm authorization if the `description` does not exactly
       match the `offer`
@@ -653,15 +656,24 @@ A reader of an invoice:
       exactly as they are in the `offer`:
       - `refund_for`
       - `description`
+    - if `chain` is not present:
+       - MUST reject the invoice if bitcoin is not a supported chain for the offer.
+    - otherwise:
+      - MUST reject the invoice if `chain` is not a supported chain for the offer.
     - if the offer had a `quantity_min` or `quantity_max` field:
       - MUST reject the invoice if there is no `quantity` field.
       - MUST reject the invoice if there is `quantity` is not within that (inclusive) range.
     - otherwise:
       - MUST reject the invoice if there is a `quantity` field.
-  - if the offer contained `refund_for`:
-      - MUST reject the invoice if `payer_key` does not match the invoice whose `payment_hash` is equal to `refund_for` `refunded_payment_hash`
-      - MUST reject the invoice if `refund_signature` is not set.
-      - MUST reject the invoice if `refund_signature` is not a valid signature using `payer_key` as described in [Signature Calculation](#signature-calculation).
+    - if the offer contained `refund_for`:
+        - MUST reject the invoice if `payer_key` does not match the invoice whose `payment_hash` is equal to `refund_for` `refunded_payment_hash`
+        - MUST reject the invoice if `refund_signature` is not set.
+        - MUST reject the invoice if `refund_signature` is not a valid signature using `payer_key` as described in [Signature Calculation](#signature-calculation).
+  - otherwise: (not an `invoice_request` reply, and no `offer_id`):
+    - if `chain` is not present:
+       - MUST reject the invoice if bitcoin is not a supported chain.
+    - otherwise:
+       - MUST reject the invoice if `chain` is not a supported chain.
   - for the bitcoin chain, if the invoice specifies `fallbacks`:
     - MUST ignore any `fallback_address` for which `version` is greater than 16.
     - MUST ignore any `fallback_address` for which `address` is less than 2 or greater than 40 bytes.
