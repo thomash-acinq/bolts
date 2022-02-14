@@ -116,12 +116,12 @@ and tagged as recommended there.  Thus we define H(`tag`,`msg`) as
 SHA256(SHA256(`tag`) || SHA256(`tag`) || `msg`), and SIG(`tag`,`msg`,`key`)
 as the signature of H(`tag`,`msg`) using `key`.
 
-Each form is signed using one or more TLV signature elements; TLV
-types 240 through 1000 are considered signature elements.  For these
+Each form is signed using one or more *signature TLV elements*: TLV
+types 240 through 1000.  For these
 the tag is "lightning" || `messagename` || `fieldname`, and `msg` is the
 Merkle-root; "lightning" is the literal 9-byte ASCII string,
 `messagename` is the name of the TLV stream being signed (i.e. "offer", "invoice_request" or "invoice") and the `fieldname` is the TLV field containing the
-signature (e.g. "signature" or "payer_signature").
+signature (e.g. "signature" or "refund_signature").
 
 The formulation of the Merkle tree is similar to that proposed in
 [BIP-taproot], with each TLV leaf paired with a nonce leaf to avoid
@@ -354,7 +354,7 @@ invoices is `lnr`.
     1. type: 56 (`replace_invoice`)
     2. data:
         * [`sha256`:`payment_hash`]
-    1. type: 240 (`payer_signature`)
+    1. type: 240 (`signature`)
     2. data:
         * [`bip340sig`:`sig`]
 
@@ -365,7 +365,7 @@ The writer of an invoice_request:
   - MUST remember the secret key corresponding to `payer_key`.
   - MUST set `offer_id` to the Merkle root of the offer as described in [Signature Calculation](#signature-calculation).
   - MUST NOT set or imply any `chain_hash` not set or implied by the offer.
-  - MUST set `payer_signature` `sig` as detailed in [Signature Calculation](#signature-calculation) using the `payer_key`.
+  - MUST set `signature` `sig` as detailed in [Signature Calculation](#signature-calculation) using the `payer_key`.
   - if the offer had a `quantity_min` or `quantity_max` field:
     - MUST set `quantity`
     - MUST set it within that (inclusive) range.
@@ -392,8 +392,8 @@ The reader of an invoice_request:
   - MUST fail the request if `features` contains unknown even bits.
   - MUST fail the request if `offer_id` is not present.
   - MUST fail the request if the `offer_id` does not refer to an unexpired offer.
-  - MUST fail the request if there is no `payer_signature` field.
-  - MUST fail the request if `payer_signature` is not correct.
+  - MUST fail the request if there is no `signature` field.
+  - MUST fail the request if `signature` is not correct.
   - if the offer had a `quantity_min` or `quantity_max` field:
     - MUST fail the request if there is no `quantity` field.
     - MUST fail the request if there is `quantity` is not within that (inclusive) range.
@@ -496,9 +496,6 @@ using `onion_message` `invoice` field.
     1. type: 39 (`payer_note`)
     2. data:
         * [`...*utf8`:`note`]
-    1. type: 50 (`payer_info`)
-    2. data:
-        * [`...*byte`:`blob`]
     1. type: 40 (`created_at`)
     2. data:
         * [`tu64`:`timestamp`]
@@ -510,11 +507,13 @@ using `onion_message` `invoice` field.
         * [`tu32`:`seconds_from_creation`]
     1. type: 46 (`cltv`)
     2. data:
-        * [`tu32`:`min_final_cltv_expiry`]
+        * [`tu16`:`min_final_cltv_expiry`]
     1. type: 48 (`fallbacks`)
     2. data:
-        * [`byte`:`num`]
-        * [`num*fallback_address`:`fallbacks`]
+        * [`...*fallback_address`:`fallbacks`]
+    1. type: 50 (`payer_info`)
+    2. data:
+        * [`...*byte`:`blob`]
     1. type: 52 (`refund_signature`)
     2. data:
         * [`bip340sig`:`payer_signature`]
@@ -548,7 +547,7 @@ A writer of an invoice:
     `payment_preimage` that will be given in return for payment.
   - MUST set (or not set) `send_invoice` the same as the offer.
   - MUST set `offer_id` to the id of the offer.
-  - MUST specify exactly one signature TLV: `signature`.
+  - MUST specify exactly one signature TLV element: `signature`.
     - MUST set `sig` to the signature using `node_id` as described in [Signature Calculation](#signature-calculation).
   - if the chain for the invoice is not bitcoin:
     - MUST specify `chain` the invoice is valid for.
