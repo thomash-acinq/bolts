@@ -577,9 +577,9 @@ A writer of an invoice:
     - MUST specify `path` in order of most-preferred to least-preferred if
       it has a preference.
     - MUST include `blindedpay` with exactly one `payinfo` for
-      each `onionmsg_path` in `blinded_path`, in order.
+      each `blinded_path` in `paths`, in order.
     - if it includes `blinded_capacities`:
-      - MUST include exactly one `incoming_msat` (in millisatoshis) per `path`, reflecting the expected maximum amount that can be sent through the path.
+      - MUST include exactly one `incoming_msat` (in millisatoshis) per `blinded_path`, reflecting the expected maximum amount that can be sent through the path.
     - SHOULD ignore any payment which does not use one of the paths.
   - otherwise:
     - MUST NOT include `blinded_payinfo`.
@@ -711,6 +711,12 @@ if that is a long time and the offer was in another currency, it's
 common to cap this at some maximum duration.  For example, omitting it
 implies the default of 7200 seconds, which is generally a sufficient
 time for payment.
+
+Rather than provide detailed per-hop-payinfo for each hop in every
+blinded path, we approximate by assuming they're uniform across each
+particular blinded path.  This is simpler, and also avoids trivially
+revealing any distinguishing non-uniformity which may distinguish
+the path.
 
 It's often useful to provide capacity hints, particularly where more
 than one blinded path is included, for payers to use multi-part
