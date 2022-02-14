@@ -553,13 +553,13 @@ hop.
         * [`...*byte`:`encrypted_data_tlv`]
     1. type: 64 (`invoice_request`)
     2. data:
-        * [`...*byte`:`invoice_request`]
+        * [`tlv_invoice_request`:`invreq`]
     1. type: 66 (`invoice`)
     2. data:
-        * [`...*byte`:`invoice`]
+        * [`tlv_invoice`:`inv`]
     1. type: 68 (`invoice_error`)
     2. data:
-        * [`...*byte`:`invoice_error`]
+        * [`tlv_invoice_error`:`inverr`]
 
 
 1. subtype: `onionmsg_path`
