@@ -522,6 +522,13 @@ using `onion_message` `invoice` field.
     1. type: 56 (`replace_invoice`)
     2. data:
         * [`sha256`:`payment_hash`]
+    1. type: 57 (`desthint`)
+    2. data:
+        * [`point`:`source`]
+        * [`short_channel_id`:`scid`]
+        * [`u32`:`fee_base_msat`]
+        * [`u32`:`fee_proportional_millionths`]
+        * [`u16`:`cltv_expiry_delta`]
     1. type: 240 (`signature`)
     2. data:
         * [`bip340sig`:`sig`]
@@ -570,7 +577,10 @@ A writer of an invoice:
       `version` as a valid witness version and `address` as a valid witness
       program
   - if it is connected only by private channels:
-    - MUST include a `blinded_path` containing one or more paths to the node.
+    - if no node connecting a private channel supports blinded payments:
+      - MUST include `desthint` containing the private channel information.
+    - otherwise:
+      - MUST include `blinded_path` containing one or more paths to the node.
   - otherwise:
     - MAY include `blinded_path`.
   - if it includes `blinded_path`:
@@ -725,6 +735,9 @@ payments.
 The invoice issuer is allowed to ignore `payer_note` (it has an odd
 number, so is optional), but if it does not, it must copy it exactly
 as the invoice_request specified.
+
+`desthint` is a compromise, to allow offers to be used with private
+channels before blinded payments are implemented everywhere.
 
 # Invoice Errors
 
