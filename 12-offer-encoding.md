@@ -130,10 +130,10 @@ revealing adjacent nodes in proofs (assuming there is a non-revealed TLV
 which has enough entropy).
 
 The Merkle tree's leaves are, in TLV-ascending order for each tlv:
-1. The H(`LnLeaf`,tlv).
-2. The H(`LnAll`||all-tlvs,tlv) where "all-tlvs" consists of all non-signature TLV entries appended in ascending order.
+1. The H("LnLeaf",tlv).
+2. The H("LnAll"||all-tlvs,tlv) where "all-tlvs" consists of all non-signature TLV entries appended in ascending order.
 
-The Merkle tree inner nodes are H(`LnBranch`, lesser-SHA256||greater-SHA256);
+The Merkle tree inner nodes are H("LnBranch", lesser-SHA256||greater-SHA256);
 this ordering means that proofs are more compact since left/right is
 inherently determined.
 
