@@ -239,7 +239,11 @@ The human-readable prefix for offers is `lno`.
 ## Requirements For Offers
 
 A writer of an offer:
-  - MUST set `node_id` to the public key of the node to request the invoice from.
+  - if it sets `node_id`:
+    - MUST set `node_id` to the public key of the node to request the invoice from.
+  - otherwise:
+    - MUST provide at least one `blinded_path`
+    - MUST use the final `onionmsg_path` `point` in the first `blinded_path` as the implied `node_id` for `signature`.
   - MAY specify exactly one signature TLV: `signature`:
     - If so, it MUST set `sig` to the signature using `node_id` as described in [Signature Calculation](#signature-calculation).
   - MUST set `description` to a complete description of the purpose
@@ -299,8 +303,12 @@ A reader of an offer:
   - if `features` contains unknown _even_ bits that are non-zero:
     - MUST NOT respond to the offer.
     - SHOULD indicate the unknown bit to the user.
-  - if `node_id` or `description` is not set:
+  - if `description` is not set:
     - MUST NOT respond to the offer.
+  - if `node_id` is not set:
+    - if `paths` is not set or does not contain at least one `blinded_path`:
+      - MUST NOT respond to the offer.
+    - MUST use the final `onionmsg_path` `point` in the first `blinded_path` as the `node_id`.
   - if `signature` is present, but is not a valid signature using `node_id` as described in [Signature Calculation](#signature-calculation):
     - MUST NOT respond to the offer.
   - SHOULD gain user consent for recurring payments.
@@ -318,6 +326,10 @@ A signature is optional, because it makes for a longer string (potentially
 limiting QR code use on low-end cameras); if the offer has an error, no
 invoice will be given (or, for `send_invoice` offers, accepted), since
 the `offer_id` already covers all the non-signature fields.
+
+The `node_id` is redundant if a `blinded_path` is provided: a public
+node can always arrange that the final `node_id` in the path is
+unblinded.
 
 # Invoice Requests
 
